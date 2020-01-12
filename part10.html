@@ -36,7 +36,10 @@ var player;
 var stars;
 var heart;
 var life=3;
+var lifeText;
 var daimond;
+var lvl=1;
+var lvlText;
 var bombs;
 var platforms;
 var cursors;
@@ -122,27 +125,45 @@ function create ()
 
     heart = this.physics.add.group({
         key: 'heart',
-        repeat: 1,
-        setXY: { x: 12, y: 0, stepX: 70 }
+        repeat: 0,
+        setXY: { x: 40, y: 0, stepX: 70 }
     });
     heart.children.iterate(function (child) {
 
         //  Give each heart a slightly different bounce
         child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
+    
+    daimond = this.physics.add.group({
+        key: 'daimond',
+        repeat: 0,
+        setXY: { x: 120, y: 0, stepX: 70 }
+    });
+    daimond.children.iterate(function (child) {
+
+        //  Give each daimond a slightly different bounce
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    });
     bombs = this.physics.add.group();
 
     //  The score
-    scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    scoreText = this.add.text(16, 16, 'Score: 0', { fontSize: '32px', fill: '#000' });
+    lifeText = this.add.text(16, 40, 'Life: 3', { fontSize: '32px', fill: '#000' });
+    lvlText = this.add.text(16, 64, 'Lvl 1', { fontSize: '32px', fill: '#000' });
 
     //  Collide the player and the stars with the platforms
     this.physics.add.collider(heart, platforms);
+    this.physics.add.collider(daimond, platforms);
     this.physics.add.collider(player, platforms);
     this.physics.add.collider(stars, platforms);
     this.physics.add.collider(bombs, platforms);
 
     //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
+    this.physics.add.overlap(player, daimond, collectDaimond, null, this);
+
     this.physics.add.overlap(player, stars, collectStar, null, this);
+
+    this.physics.add.overlap(player, heart, collecHeart, null, this);
 
     this.physics.add.collider(player, bombs, hitBomb, null, this);
 }
@@ -178,11 +199,19 @@ function update ()
         player.setVelocityY(-330);
     }
 }
+function collectDaimond(player, daimond){
+    daimond.disableBody(true, true);
+    score+=50;
+    scoreText.setText('Score: ' + score);
+}
+
 function collecHeart(player, heart){
     heart.disableBody(true, true);
     life++;
+    lifeText.setText('Life: ' + (life));
 
 }
+
 function collectStar (player, star)
 {
     star.disableBody(true, true);
@@ -191,13 +220,18 @@ function collectStar (player, star)
     score += 10;
     scoreText.setText('Score: ' + score);
 
+
     if (stars.countActive(true) === 0)
     {
         //  A new batch of stars to collect
         stars.children.iterate(function (child) {
-
             child.enableBody(true, child.x, 0, true, true);
-
+        });
+        heart.children.iterate(function(child){
+            child.enableBody(true, child.x, 0, true, true);
+        });
+        daimond.children.iterate(function(child){
+            child.enableBody(true, child.x, 0, true, true);
         });
 
         var x = (player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
@@ -207,7 +241,9 @@ function collectStar (player, star)
         bomb.setCollideWorldBounds(true);
         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
         bomb.allowGravity = false;
-
+        
+        lvl++;
+        lvlText.setText('Lvl: ' + (lvl));
     }
     
 }
@@ -215,14 +251,12 @@ function collectStar (player, star)
 function hitBomb (player, bomb)
 {
     life--;
+    lifeText.setText('Life: ' + (life));
+    scoreText.setText('Score: ' + (score-50));
+    score = score-50;
     if(life<=0){
         this.physics.pause();
-
         gameOver = true;
-        if(gameOver==true){
-            scoreText.setText('Score: ' + (score-50));
-            score = score-50;
-        }
     }
     player.setTint(0xff0000);
     player.anims.play('turn');
