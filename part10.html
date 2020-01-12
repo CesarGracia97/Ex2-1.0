@@ -243,7 +243,12 @@ function collectStar (player, star)
         bomb.allowGravity = false;
         
         lvl++;
-        lvlText.setText('Lvl: ' + (lvl));
+        lvlText.setText('Lvl: ' + lvl);
+        if(lvl>1){
+            var n1 = Math.round(Math.random()*300);
+            var n2 = Math.round(Math.random()*200);
+            platforms.create(n1, n2, 'ground');
+        }
     }
     
 }
